@@ -2,6 +2,7 @@
 from __future__ import print_function
 import time
 import numpy as np
+from testcase import *
 from plotter import *
 
 
@@ -171,7 +172,7 @@ class FEComputing:
 
 class FEError(FEComputing):
 	def __init__(self, N, f, verbose=0):
-		FEComputing.__init__(self,N, verbose=verbose)
+		FEComputing.__init__(self, N, verbose=verbose)
 		self.f = f
 	def compute(self, derivative):
 		# derivate :
@@ -206,12 +207,12 @@ class FEError(FEComputing):
 					fct2 = self.constructPolyNode(i2, idNode2, idNode0)
 					#Calcul du terme intégrale(phi_i*phi_j)
 					res += self.f[idNode1]*self.f[idNode2]*np.abs(betaX*betaY)*self.quadIntegration(ftimesg, fct1, fct2, alphaX, alphaY, betaX, betaY)
-					if derivative>0:
+					if derivative > 0:
 						#Calcul du terme intégrale(Grad(phi_i)*Grad(phi_j))
 						resDerivative += self.f[idNode1]*self.f[idNode2]*np.abs(betaX*betaY)*self.quadIntegration(gradftimesgradg, fct1, fct2, alphaX, alphaY, betaX, betaY)
-		if derivative==0:
+		if derivative == 0:
 			return res
-		elif derivative==1:
+		elif derivative == 1:
 			return res+resDerivative
 		else:
 			return res, resDerivative
@@ -401,11 +402,7 @@ class FEM(FEComputing):
 					if idNode1 in self.listNodeNeumann:
 						# print("IN NEUMANN NODE")
 						xNode, _ = self.getCoordNode(idNode1)
-						# if abs(xNode-0.) <= self.dx/100.:
-						# 	xNeumann = 0.
-						# else:
-						# 	xNeumann = 1.
-						xNeumann=xNode
+						xNeumann = xNode
 						self.A[idNode1, idNode2] += self.he*np.abs(betaX*betaY)*self.quadIntegration1D(ftimesg, fct1.evaluateX(xNeumann), fct2.evaluateX(xNeumann), alphaX, alphaY, betaX, betaY)
 				#Calcul de la constante du terme de droite
 				cte = Polynome(0., 0., 0., self.f[idCell])
@@ -414,12 +411,7 @@ class FEM(FEComputing):
 				#Terme d'intégration sur les bords de Neumann
 				if idNode1 in self.listNodeNeumann:
 					xNode, _ = self.getCoordNode(idNode1)
-					# if abs(xNode-0.) <= self.dx/100.:
-					# 	xNeumann = 0.
-					# else:
-					# 	xNeumann = 1.
-					# print(xNode,xNeumann)
-					xNeumann=xNode
+					xNeumann = xNode
 					cte = Polynome(0., 0., 0., self.getNeumannCond(idNode1))
 					self.b[idNode1] += self.he*np.abs(betaX*betaY)*self.quadIntegration1D(ftimescte, fct1.evaluateX(xNeumann), cte.evaluateX(xNeumann), alphaX, alphaY, betaX, betaY)
 		#Traitement des noeuds situés sur le bord de Dirichlet
@@ -435,267 +427,3 @@ class FEM(FEComputing):
 		end = time.time()
 		self.computingTime = end-start
 		print("computingTime="+str(self.computingTime))
-
-
-
-# class FEM2D:
-# 	def __init__(self, N, T1, T3, Tinf2, Tinf4, allDiri=False, he=0., f=None, lamb=None, verbose=0):
-# 		self.A = np.zeros(((self.N+1)**2, (self.N+1)**2))
-# 		self.b = np.zeros((self.N+1)**2)
-# 		self.allDiri = allDiri
-# 		if not self.allDiri:
-# 			self.he = he
-# 		else:
-# 			self.he = 0.
-# 		# self.Tinf=Tinf
-# 		if lamb is None:
-# 			lamb = np.ones(self.N**2)
-# 		self.lamb = lamb
-# 		self.c = np.ones(self.N**2)*0.
-# 		if f is None:
-# 			f = np.zeros(self.N**2)
-# 		self.f = f
-# 		#Impose les conditions de Dirichlet, permet de passer sous forme de flottant (condition uniforme sur un bord) ou sous forme d'array
-# 		if hasattr(T1, "__len__"):
-# 			self.T1Uniform = False
-# 			self.T1 = T1
-# 		else:
-# 			self.T1Uniform = True
-# 			self.T1 = T1
-# 		if hasattr(T3, "__len__"):
-# 			self.T3Uniform = False
-# 			self.T3 = T3
-# 		else:
-# 			self.T3Uniform = True
-# 			self.T3 = T3
-# 		#Idem pour Tinf de Neumann
-# 		if hasattr(Tinf2, "__len__"):
-# 			self.T2Uniform = False
-# 			self.Tinf2 = Tinf2
-# 		else:
-# 			self.T2Uniform = True
-# 			self.Tinf2 = Tinf2
-# 		if hasattr(Tinf4, "__len__"):
-# 			self.T4Uniform = False
-# 			self.Tinf4 = Tinf4
-# 		else:
-# 			self.T4Uniform = True
-# 			self.Tinf4 = Tinf4
-
-# 		self.listNodeDiri = []
-# 		self.listNodeNeumann = []
-# 	def computeBoundaryCond(self):
-# 		#Calcul des noeuds qui sont sur les bords de Dirichlet
-# 		for idNode in range((self.N+1)**2):
-# 			xNode, yNode = self.getCoordNode(idNode)
-# 			if abs(yNode-0.) <= self.dx/100. or abs(yNode-1.) <= self.dx/100.:
-# 				self.listNodeDiri.append(idNode)
-# 			elif abs(xNode-0.) <= self.dx/100. or abs(xNode-1.) <= self.dx/100.:
-# 				if self.allDiri:
-# 					self.listNodeDiri.append(idNode)
-# 				else:
-# 					self.listNodeNeumann.append(idNode)
-# 		if self.verbose >= 1:
-# 			print("Nodes on Dirichlet border : ")
-# 			print("\t"+str(self.listNodeDiri))
-# 			print("Nodes on Neumann border : ")
-# 			print("\t"+str(self.listNodeNeumann))
-# 	def getDiriCond(self, idNode):
-# 		#Renvoie le terme de bord de Dirichlet
-# 		xNode, yNode = self.getCoordNode(idNode)
-# 		#On procède de la sorte pour tester si un noeud est sur un bord de Dirichlet car pour un grand nombre de noeud, il y a des erreurs d'arrondi
-# 		if abs(yNode-0.) <= self.dx/100.:
-# 			if self.T1Uniform:
-# 				return self.T1
-# 			else:
-# 				yNode2 = idNode/(self.N+1)
-# 				xNode2 = idNode-(self.N+1)*yNode2
-# 				return self.T1[xNode2]
-# 		elif abs(yNode-1.) <= self.dx/100.:
-# 			if self.T3Uniform:
-# 				return self.T3
-# 			else:
-# 				yNode2 = idNode/(self.N+1)
-# 				xNode2 = idNode-(self.N+1)*yNode2
-# 				return self.T3[xNode2]
-# 		else:
-# 			if not self.allDiri:
-# 				raise ValueError('Node not on Dirichlet border')
-# 			else:
-# 				if abs(xNode-1.) <= self.dx/100.:
-# 					if self.T2Uniform:
-# 						return self.Tinf2
-# 					else:
-# 						yNode2 = idNode/(self.N+1)
-# 						xNode2 = idNode-(self.N+1)*yNode2
-# 						return self.Tinf2[yNode2]
-# 				elif abs(xNode-0.) <= self.dx/100.:
-# 					if self.T4Uniform:
-# 						return self.Tinf4
-# 					else:
-# 						yNode2 = idNode/(self.N+1)
-# 						xNode2 = idNode-(self.N+1)*yNode2
-# 						return self.Tinf4[yNode2]
-# 	def getNeumannCond(self, idNode):
-# 		#Renvoie le terme de bord de Neumann Tinf
-# 		xNode, yNode = self.getCoordNode(idNode)
-# 		if not self.allDiri:
-# 			#On procède de la sorte pour tester si un noeud est sur un bord de Neumann car pour un grand nombre de noeud, il y a des erreurs d'arrondi
-# 			if abs(xNode-0.) <= self.dx/100.:
-# 				if self.T2Uniform:
-# 					return self.Tinf2
-# 				else:
-# 					yNode2 = idNode/(self.N+1)
-# 					return self.Tinf2[yNode2]
-# 			elif abs(xNode-1.) <= self.dx/100.:
-# 				if self.T4Uniform:
-# 					return self.Tinf4
-# 				else:
-# 					yNode2 = idNode/(self.N+1)
-# 					return self.Tinf4[yNode2]
-# 			else:
-# 				raise ValueError('Node not on Neumann border')
-# 		else:
-# 			raise ValueError('Node not on Neumann border')
-# 	def quadIntegration1D(self, multipFct, fct1, fct2, alphaX, alphaY, betaX, betaY):
-# 		#Méthode réalisant l'intégration par quadrature de Gauss sur un segment vertical
-# 		#On prend en paramètre le type d'évaluation du produit de polynôme, les fonctions passées dans ce produit et le changement de variable
-# 		res = 0.
-# 		for i in range(3):
-# 			w_i = self.quadWeight[i]
-# 			y_i = self.quadPts[i]
-# 			#On se fiche de la coordonnée en x car on l'a éliminée par évaluation partielle du polynôme
-# 			x_reel, y_reel = self.phi(alphaX, alphaY, betaX, betaY, 0., y_i)
-# 			res += w_i*multipFct(fct1, fct2, x_reel, y_reel)
-# 		return res
-# 	def compute(self):
-# 		# Méthode calculant la solution
-# 		start = time.time()
-# 		#Boucle sur les cellules
-# 		for idCell in range(self.N**2):
-# 			# Affichage sympa
-# 			if self.verbose == 0:
-# 				progress(idCell, self.N**2, prefix='Iteration '+str(idCell)+'/'+str(self.N**2), suffix='', decimals=1, length=40, fill='#')
-# 			if self.verbose >= 2:
-# 				print("\n{:#^70s}".format("LOOP idCell="+str(idCell)))
-# 			#Récupère les noeuds délimitant la cellule
-# 			idNodes = self.getNeighbors(idCell)
-# 			#Calcul des positions de ces noeuds
-# 			x0, y0 = self.getCoordNode(idNodes[0])
-# 			x1, _ = self.getCoordNode(idNodes[1])
-# 			_, y3 = self.getCoordNode(idNodes[3])
-# 			#Calcul du changement de variable :
-# 			#	x=alphaX+betaX*x_tilde
-# 			#	y=alphaY+betaY*y_tilde
-# 			alphaX = x0
-# 			betaX = x1-x0
-# 			alphaY = y0
-# 			betaY = y3-y0
-# 			#Récupère le noeud de référence de la cellule (en bas à gauche)
-# 			idNode0 = self.getNeighbors(idCell)[0]
-# 			#Boucle sur les noeuds associés à la cellule
-# 			for i1, idNode1 in enumerate(self.getNeighbors(idCell)):
-# 				if self.verbose >= 2:
-# 					print("\n{:#^55s}".format("LOOP idNode1="+str(idNode1)))
-# 				#Boucle sur les noeuds associés à la cellule
-# 				for i2, idNode2 in enumerate(self.getNeighbors(idCell)):
-# 					if self.verbose >= 2:
-# 						print("\n{:#^40s}".format("idNode1="+str(idNode1)+" idNode2="+str(idNode2)))
-# 					#Construction des 2 fonctions à intégrer sur la cellule
-# 					fct1 = self.constructPolyNode(i1, idNode1, idNode0)
-# 					fct2 = self.constructPolyNode(i2, idNode2, idNode0)
-# 					#Sur les bords de Dirichlet on impose les fonctions à zéro, on les exclue donc de la boucle pour les traiter à part
-# 					if idNode1 not in self.listNodeDiri:
-# 						#Calcul du terme intégrale(c*phi_i*phi_j) -> notre algorithme permet de traiter un cas plus général
-# 						self.A[idNode1, idNode2] += self.c[idCell]*np.abs(betaX*betaY)*self.quadIntegration(ftimesg, fct1, fct2, alphaX, alphaY, betaX, betaY)
-# 						#Calcul du terme intégrale(lambda*Grad(phi_i)*Grad(phi_j))
-# 						self.A[idNode1, idNode2] += self.lamb[idCell]*np.abs(betaX*betaY)*self.quadIntegration(gradftimesgradg, fct1, fct2, alphaX, alphaY, betaX, betaY)
-# 					#Terme d'intégration sur les bords de Neumann
-# 					if idNode1 in self.listNodeNeumann:
-# 						# print("IN NEUMANN NODE")
-# 						xNode, _ = self.getCoordNode(idNode1)
-# 						# if abs(xNode-0.) <= self.dx/100.:
-# 						# 	xNeumann = 0.
-# 						# else:
-# 						# 	xNeumann = 1.
-# 						xNeumann=xNode
-# 						self.A[idNode1, idNode2] += self.he*np.abs(betaX*betaY)*self.quadIntegration1D(ftimesg, fct1.evaluateX(xNeumann), fct2.evaluateX(xNeumann), alphaX, alphaY, betaX, betaY)
-# 				#Calcul de la constante du terme de droite
-# 				cte = Polynome(0., 0., 0., self.f[idCell])
-# 				#Calcul du terme de droite par intégration
-# 				self.b[idNode1] += np.abs(betaX*betaY)*self.quadIntegration(ftimescte, fct1, cte, alphaX, alphaY, betaX, betaY)
-# 				#Terme d'intégration sur les bords de Neumann
-# 				if idNode1 in self.listNodeNeumann:
-# 					xNode, _ = self.getCoordNode(idNode1)
-# 					# if abs(xNode-0.) <= self.dx/100.:
-# 					# 	xNeumann = 0.
-# 					# else:
-# 					# 	xNeumann = 1.
-# 					# print(xNode,xNeumann)
-# 					xNeumann=xNode
-# 					cte = Polynome(0., 0., 0., self.getNeumannCond(idNode1))
-# 					self.b[idNode1] += self.he*np.abs(betaX*betaY)*self.quadIntegration1D(ftimescte, fct1.evaluateX(xNeumann), cte.evaluateX(xNeumann), alphaX, alphaY, betaX, betaY)
-# 		#Traitement des noeuds situés sur le bord de Dirichlet
-# 		for idNodeDiri in self.listNodeDiri:
-# 			#On impose la valeur de la condition limite en mettant toute la ligne de A à 0 sauf le coefficient (i,i) que l'on met à 1
-# 			#La résolution du système linéaire imposera donc que l'intégrale vaut le terme de droite
-# 			self.A[idNodeDiri, idNodeDiri] = 1.
-# 			self.b[idNodeDiri] = self.getDiriCond(idNodeDiri)
-# 			# print(str(self.getCoordNode(idNodeDiri))+" -> "+str(self.b[idNodeDiri]))
-# 		progress(self.N**2, self.N**2, prefix='Solving system', suffix='', decimals=1, length=40, fill='#')
-# 		#Résolution du système linéaire
-# 		self.x = np.linalg.solve(self.A, self.b)
-# 		end = time.time()
-# 		self.computingTime = end-start
-# 		print("computingTime="+str(self.computingTime))
-
-
-class TestCase:
-	# Une classe pour manipuler facilement les parametres d'entree du modele
-	def __init__(self, N):
-		self.N = N
-		x = np.linspace(0., 1., self.N)
-		self.XCell, self.YCell = np.meshgrid(x, x)
-		x = np.linspace(0., 1., self.N+1)
-		self.X, self.Y = np.meshgrid(x, x)
-		self.lamb = np.ones(self.N**2)
-	def getSourceGaussian(self, coeff=1000.):
-		# Terme source en gaussienne
-		return np.exp(-(self.XCell-0.5)**2.-(self.YCell-0.5)**2.).reshape(-1)*coeff
-	def getF(self, listX=[0.5], listF=[1., 100.]):
-		# Calcul de la matrice f à partir de délimiteurs en x et de valeur à donner sur des plages rectangulaires
-		if len(listX)+1 != len(listF):
-			raise ValueError('listX and listF lengths do not match')
-		dx = 1./self.N
-		listX = [0.]+listX+[1.]
-		f = np.ones(self.N**2)
-		for i in range(self.N):
-			for j in range(self.N):
-				# Calcul du numero de cellule et du x
-				idCell = i+self.N*j
-				# idCell=i+self.N*(self.N-1-j)
-				x = j*dx
-				# Trouve le plus grand delimiteur plus petit que x
-				idF = (next(l[0] for l in enumerate(listX) if l[1] > x)-1)
-				# idF=(next(l[0] for l in enumerate(listX) if l[1] < x))
-				f[idCell] = listF[idF]
-		return f
-	def getLamb(self, listX=[0.5], listLamb=[1., 20.]):
-		# Calcul de la matrice lambda à partir de délimiteurs en x et de valeur à donner sur des plages rectangulaires
-		if len(listX)+1 != len(listLamb):
-			raise ValueError('listX and listLamb lengths do not match')
-		dx = 1./self.N
-		listX = [0.]+listX+[1.]
-		for i in range(self.N):
-			for j in range(self.N):
-				# Calcul du numero de cellule et du x
-				idCell = i+self.N*j
-				# idCell=i+self.N*(self.N-1-j)
-				x = j*dx
-				# Trouve le plus grand delimiteur plus petit que x
-				idLamb = (next(l[0] for l in enumerate(listX) if l[1] > x)-1)
-				# idLamb=(next(l[0] for l in enumerate(listX) if l[1] < x))
-				self.lamb[idCell] = listLamb[idLamb]
-		return self.lamb
-	def setSolTheorique(self, sol):
-		self.sol = sol
