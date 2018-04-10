@@ -2,9 +2,9 @@ from fem2d import *
 if not os.path.isfile("NOPLOT"):
 	from sklearn import linear_model
 
-# list_N=[6,10,20,30,50,80,100]
+list_N=[6,10,20,30,50,80,100]
 # list_N=[6,10,20,30,50]
-list_N=np.arange(2,21,2)
+# list_N=np.arange(2,21,2)
 
 exactNorm = False
 
