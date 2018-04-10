@@ -3,7 +3,9 @@ from __future__ import print_function
 import time
 import numpy as np
 from testcase import *
-from plotter import *
+import os
+if not os.path.isfile("NOPLOT"):
+	from plotter import *
 
 
 
