@@ -386,7 +386,7 @@ class FEM(FEComputing):
 		#Boucle sur les cellules
 		for idCell in range(self.N**2):
 			# Affichage sympa
-			if self.verbose == 0:
+			if self.verbose == 0 and idCell%20 == 0:
 				progress(idCell, self.N**2, prefix='Iteration '+str(idCell)+'/'+str(self.N**2), suffix='', decimals=1, length=40, fill='#')
 			if self.verbose >= 2:
 				print("\n{:#^70s}".format("LOOP idCell="+str(idCell)))

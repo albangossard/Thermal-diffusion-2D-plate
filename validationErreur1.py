@@ -1,6 +1,6 @@
 from fem2d import *
 
-N = 30
+N = 30*0+200
 xDiri = np.linspace(0.,1.,N+1)
 T1 = (xDiri)**2.
 T3 = (xDiri)**2.+1.
