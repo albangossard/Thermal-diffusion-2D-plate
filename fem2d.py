@@ -2,10 +2,15 @@
 from __future__ import print_function
 import time
 import numpy as np
+import scipy.sparse as scp
+from scipy.sparse.linalg import spsolve
 from testcase import *
 import os
 if not os.path.isfile("NOPLOT"):
 	from plotter import *
+
+from joblib import Parallel, delayed
+import multiprocessing
 
 
 
@@ -172,6 +177,40 @@ class FEComputing:
 
 
 
+def computeOnCell(self2, idCell, derivative):
+	res = 0.
+	resDerivative = 0.
+	#Récupère les noeuds délimitant la cellule
+	idNodes = self2.getNeighbors(idCell)
+	#Calcul des positions de ces noeuds
+	x0, y0 = self2.getCoordNode(idNodes[0])
+	x1, _ = self2.getCoordNode(idNodes[1])
+	_, y3 = self2.getCoordNode(idNodes[3])
+	#Calcul du changement de variable :
+	#	x=alphaX+betaX*x_tilde
+	#	y=alphaY+betaY*y_tilde
+	alphaX = x0
+	betaX = x1-x0
+	alphaY = y0
+	betaY = y3-y0
+	#Récupère le noeud de référence de la cellule (en bas à gauche)
+	idNode0 = self2.getNeighbors(idCell)[0]
+	#Boucle sur les noeuds associés à la cellule
+	for i1, idNode1 in enumerate(self2.getNeighbors(idCell)):
+		#Boucle sur les noeuds associés à la cellule
+		for i2, idNode2 in enumerate(self2.getNeighbors(idCell)):
+			#Construction des 2 fonctions à intégrer sur la cellule
+			fct1 = self2.constructPolyNode(i1, idNode1, idNode0)
+			fct2 = self2.constructPolyNode(i2, idNode2, idNode0)
+			#Calcul du terme intégrale(phi_i*phi_j)
+			res += self2.f[idNode1]*self2.f[idNode2]*np.abs(betaX*betaY)*self2.quadIntegration(ftimesg, fct1, fct2, alphaX, alphaY, betaX, betaY)
+			if derivative > 0:
+				#Calcul du terme intégrale(Grad(phi_i)*Grad(phi_j))
+				resDerivative += self2.f[idNode1]*self2.f[idNode2]*np.abs(betaX*betaY)*self2.quadIntegration(gradftimesgradg, fct1, fct2, alphaX, alphaY, betaX, betaY)
+	return (res, resDerivative)
+
+
+
 class FEError(FEComputing):
 	def __init__(self, N, f, verbose=0):
 		FEComputing.__init__(self, N, verbose=verbose)
@@ -181,37 +220,18 @@ class FEError(FEComputing):
 		#	- 0 : compute L2 norm only
 		#	- 1 : compute H1 norm only
 		#	- 2 : compute both L2 and H1 norms
+
+		#Ce code est parallélisable car il ne comporte pas de section critique
+		#On calcule donc l'intégrale sur chaque cellule et on somme le tout ensuite
+		num_cores = multiprocessing.cpu_count()
+		#Boucle sur les cellules
+		results = Parallel(n_jobs=num_cores)(delayed(computeOnCell)(self, idCell, derivative) for idCell in range(self.N**2))
 		res = 0.
 		resDerivative = 0.
-		#Boucle sur les cellules
-		for idCell in range(self.N**2):
-			#Récupère les noeuds délimitant la cellule
-			idNodes = self.getNeighbors(idCell)
-			#Calcul des positions de ces noeuds
-			x0, y0 = self.getCoordNode(idNodes[0])
-			x1, _ = self.getCoordNode(idNodes[1])
-			_, y3 = self.getCoordNode(idNodes[3])
-			#Calcul du changement de variable :
-			#	x=alphaX+betaX*x_tilde
-			#	y=alphaY+betaY*y_tilde
-			alphaX = x0
-			betaX = x1-x0
-			alphaY = y0
-			betaY = y3-y0
-			#Récupère le noeud de référence de la cellule (en bas à gauche)
-			idNode0 = self.getNeighbors(idCell)[0]
-			#Boucle sur les noeuds associés à la cellule
-			for i1, idNode1 in enumerate(self.getNeighbors(idCell)):
-				#Boucle sur les noeuds associés à la cellule
-				for i2, idNode2 in enumerate(self.getNeighbors(idCell)):
-					#Construction des 2 fonctions à intégrer sur la cellule
-					fct1 = self.constructPolyNode(i1, idNode1, idNode0)
-					fct2 = self.constructPolyNode(i2, idNode2, idNode0)
-					#Calcul du terme intégrale(phi_i*phi_j)
-					res += self.f[idNode1]*self.f[idNode2]*np.abs(betaX*betaY)*self.quadIntegration(ftimesg, fct1, fct2, alphaX, alphaY, betaX, betaY)
-					if derivative > 0:
-						#Calcul du terme intégrale(Grad(phi_i)*Grad(phi_j))
-						resDerivative += self.f[idNode1]*self.f[idNode2]*np.abs(betaX*betaY)*self.quadIntegration(gradftimesgradg, fct1, fct2, alphaX, alphaY, betaX, betaY)
+		for e in results:
+			res += e[0]
+			resDerivative += e[1]
+			
 		if derivative == 0:
 			return res
 		elif derivative == 1:
@@ -230,7 +250,9 @@ class FEError(FEComputing):
 class FEM(FEComputing):
 	def __init__(self, N, T1, T3, Tinf2, Tinf4, allDiri=False, he=0., f=None, lamb=None, verbose=0):
 		FEComputing.__init__(self, N, verbose=verbose)
-		self.A = np.zeros(((self.N+1)**2, (self.N+1)**2))
+		print("N="+str(self.N))
+		# self.A = np.zeros(((self.N+1)**2, (self.N+1)**2))
+		self.A = scp.lil_matrix(((self.N+1)**2, (self.N+1)**2))
 		self.b = np.zeros((self.N+1)**2)
 		self.allDiri = allDiri
 		if not self.allDiri:
@@ -425,7 +447,10 @@ class FEM(FEComputing):
 			# print(str(self.getCoordNode(idNodeDiri))+" -> "+str(self.b[idNodeDiri]))
 		progress(self.N**2, self.N**2, prefix='Solving system', suffix='', decimals=1, length=40, fill='#')
 		#Résolution du système linéaire
-		self.x = np.linalg.solve(self.A, self.b)
+		# self.x = np.linalg.solve(self.A, self.b)
+		print("nonZeroRate="+str(float(self.A.nonzero()[0].shape[0])/(self.A.shape[0]*self.A.shape[1])))
+		self.A = self.A.tocsr()
+		self.x = spsolve(self.A, self.b)
 		end = time.time()
 		self.computingTime = end-start
 		print("computingTime="+str(self.computingTime))
