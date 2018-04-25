@@ -388,8 +388,6 @@ class FEM(FEComputing):
 		#Ce code est parallélisable car il ne comporte pas de section critique
 		#On calcule donc l'intégrale sur chaque et on remplit la matrice ensuite
 		num_cores = multiprocessing.cpu_count()
-		print("num_cores="+str(num_cores))
-		sys.exit(1)
 		#Boucle sur les cellules
 		results = Parallel(n_jobs=num_cores)(delayed(computeOnCell)(self, idCell) for idCell in range(self.N**2))
 		progress(self.N**2, self.N**2, prefix='Filling matrix', suffix='', decimals=1, length=40, fill='#')
@@ -427,10 +425,10 @@ def computeOnCell(self2, idCell):
 	resb=[]
 
 	# Affichage sympa
-	if self2.verbose == 0 and idCell%20 == 0:
-		progress(idCell, self2.N**2, prefix='Iteration '+str(idCell)+'/'+str(self2.N**2), suffix='', decimals=1, length=40, fill='#')
-	if self2.verbose >= 2:
-		print("\n{:#^70s}".format("LOOP idCell="+str(idCell)))
+	# if self2.verbose == 0 and idCell%20 == 0:
+	# 	progress(idCell, self2.N**2, prefix='Iteration '+str(idCell)+'/'+str(self2.N**2), suffix='', decimals=1, length=40, fill='#')
+	# if self2.verbose >= 2:
+	# 	print("\n{:#^70s}".format("LOOP idCell="+str(idCell)))
 	#Récupère les noeuds délimitant la cellule
 	idNodes = self2.getNeighbors(idCell)
 	#Calcul des positions de ces noeuds
