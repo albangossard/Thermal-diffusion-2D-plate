@@ -388,6 +388,8 @@ class FEM(FEComputing):
 		#Ce code est parallélisable car il ne comporte pas de section critique
 		#On calcule donc l'intégrale sur chaque et on remplit la matrice ensuite
 		num_cores = multiprocessing.cpu_count()
+		print("num_cores="+str(num_cores))
+		sys.exit(1)
 		#Boucle sur les cellules
 		results = Parallel(n_jobs=num_cores)(delayed(computeOnCell)(self, idCell) for idCell in range(self.N**2))
 		progress(self.N**2, self.N**2, prefix='Filling matrix', suffix='', decimals=1, length=40, fill='#')
