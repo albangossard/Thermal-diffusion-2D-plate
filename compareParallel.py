@@ -5,7 +5,7 @@ if not os.path.isfile("NOPLOT"):
 parallel=True
 
 list_N = np.loadtxt('courbeCV1_list_N.txt')
-list_assemblingTime = np.loadtxt('courbeCV1_list_assemblingTime.txt')
+list_assemblingTime = np.loadtxt('courbeCV1_parallel=1_list_assemblingTime.txt')
 list_computingTime_parallel = np.loadtxt('courbeCV1_parallel=1_list_computingTime.txt')
 list_computingTime_notParallel = np.loadtxt('courbeCV1_parallel=0_list_computingTime.txt')
 
