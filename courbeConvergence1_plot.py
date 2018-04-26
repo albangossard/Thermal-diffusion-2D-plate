@@ -2,10 +2,10 @@ from fem2d import *
 if not os.path.isfile("NOPLOT"):
 	from sklearn import linear_model
 
-
 list_N = np.loadtxt('courbeCV1_list_N.txt')
 list_errL2 = np.loadtxt('courbeCV1_list_errL2.txt')
 list_errH1 = np.loadtxt('courbeCV1_list_errH1.txt')
+list_nonZeroRate = np.loadtxt('courbeCV1_list_nonZeroRate.txt')
 
 
 list_NRegr=np.log(np.array(list_N)).reshape((-1,1))
@@ -36,4 +36,14 @@ plt.grid(True, which="both")
 plt.xlabel('N')
 plt.ylabel('Error')
 plt.legend()
+plt.show()
+
+
+ax = plt.gca()
+ax.plot(list_N, list_nonZeroRate, 'o', markeredgecolor='none')
+ax.set_yscale('log')
+ax.set_xscale('log')
+plt.grid(True, which="both")
+plt.xlabel('N')
+plt.ylabel('Non zero rate')
 plt.show()
