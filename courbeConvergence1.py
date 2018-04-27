@@ -4,23 +4,21 @@ if not os.path.isfile("NOPLOT"):
 
 
 # list_N=[6,10,20,30,50,80,100]
-list_N=[80*0+100]
+# list_N=[50]
 # list_N=[6,10,20,30,50,80,100,150,200,250,300,350,400,500,600,700,800,900,1000]
 # list_N=[6,10,20,30,50,80,100,150,200,250,300]
-# list_N=[6,10,20,30,50,80,100,150,200]
+list_N=[6,10,20,30,50,80,100,150,200]
 # list_N=[6,10,20,30,50]
 # list_N=np.arange(2,21,2)
 
 exactNorm = False
 
 
-# for parallel in [False, True]:
-parallel=2*0+True
-if True:
+for parallel in [0, 1, 2]:
 
     list_errL2=[]
     list_errH1=[]
-    if parallel:
+    if parallel==1:
         list_assemblingTime=[]
     list_computingTime=[]
     list_nonZeroRate=[]
@@ -41,7 +39,7 @@ if True:
         M = FEM(N, T1, T3, Tinf2, Tinf4, allDiri=True, f=f, lamb=lamb, verbose=0, parallel=parallel)
         M.computeBoundaryCond()
         M.compute()
-        if parallel==True:
+        if parallel==1:
             assemblingTime, computingTime, nonZeroRate = M.stats()
             list_assemblingTime.append(assemblingTime)
         else:
@@ -72,7 +70,7 @@ if True:
             list_errL2.append(np.linalg.norm(diff)/(diff.shape[0]*diff.shape[1]))
             list_errH1.append(np.linalg.norm(diff)/(diff.shape[0]*diff.shape[1])+np.linalg.norm(np.gradient(diff))/(diff.shape[0]*diff.shape[1]))
 
-    if parallel:
+    if parallel==1:
         np.savetxt('courbeCV1_list_N.txt',list_N)
         np.savetxt('courbeCV1_list_errL2.txt',list_errL2)
         np.savetxt('courbeCV1_list_errH1.txt',list_errH1)
@@ -112,7 +110,7 @@ if True:
 
 
         ax = plt.gca()
-        if parallel:
+        if parallel==1:
             ax.plot(list_N, list_assemblingTime, 'o', label='assembling time', markeredgecolor='none')
         ax.plot(list_N, list_computingTime, 'o', label='computing time', markeredgecolor='none')
         ax.set_yscale('log')
