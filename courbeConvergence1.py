@@ -41,8 +41,7 @@ if True:
         M = FEM(N, T1, T3, Tinf2, Tinf4, allDiri=True, f=f, lamb=lamb, verbose=0, parallel=parallel)
         M.computeBoundaryCond()
         M.compute()
-        parallel=False
-        if parallel:
+        if parallel==True:
             assemblingTime, computingTime, nonZeroRate = M.stats()
             list_assemblingTime.append(assemblingTime)
         else:
