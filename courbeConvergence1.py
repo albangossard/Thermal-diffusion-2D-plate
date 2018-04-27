@@ -15,7 +15,7 @@ exactNorm = False
 
 
 # for parallel in [False, True]:
-parallel=2
+parallel=2*0
 if True:
 
     list_errL2=[]
