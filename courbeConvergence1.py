@@ -4,17 +4,19 @@ if not os.path.isfile("NOPLOT"):
 
 
 # list_N=[6,10,20,30,50,80,100]
-# list_N=[100]
+list_N=[80*0+100]
 # list_N=[6,10,20,30,50,80,100,150,200,250,300,350,400,500,600,700,800,900,1000]
 # list_N=[6,10,20,30,50,80,100,150,200,250,300]
-list_N=[6,10,20,30,50,80,100,150,200]
+# list_N=[6,10,20,30,50,80,100,150,200]
 # list_N=[6,10,20,30,50]
 # list_N=np.arange(2,21,2)
 
 exactNorm = False
 
 
-for parallel in [False, True]:
+# for parallel in [False, True]:
+parallel=2
+if True:
 
     list_errL2=[]
     list_errH1=[]
@@ -39,6 +41,7 @@ for parallel in [False, True]:
         M = FEM(N, T1, T3, Tinf2, Tinf4, allDiri=True, f=f, lamb=lamb, verbose=0, parallel=parallel)
         M.computeBoundaryCond()
         M.compute()
+        parallel=False
         if parallel:
             assemblingTime, computingTime, nonZeroRate = M.stats()
             list_assemblingTime.append(assemblingTime)

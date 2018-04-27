@@ -11,6 +11,7 @@ if not os.path.isfile("NOPLOT"):
 
 from joblib import Parallel, delayed
 import multiprocessing
+import threading
 
 
 
@@ -389,7 +390,40 @@ class FEM(FEComputing):
 	def compute(self):
 		# Méthode calculant la solution
 		start = time.time()
-		if self.parallel:
+		if self.parallel==2:
+			self.parallel=False
+			threads_list1=[]
+			threads_list2=[]
+			num_cores = multiprocessing.cpu_count()/2
+			for idLine in range(self.N):
+				if idLine%2==0:
+					threads_list1.append(threading.Thread(target=computeLine, args=[self, idLine]))
+					if len(threads_list1)==num_cores:
+						for i in range(len(threads_list1)):
+							threads_list1[i].start()
+						for i in range(len(threads_list1)):
+							threads_list1[i].join()
+						threads_list1=[]
+			for i in range(len(threads_list1)):
+				threads_list1[i].start()
+			for i in range(len(threads_list1)):
+				threads_list1[i].join()
+			for idLine in range(self.N):
+				if idLine%2==1:
+					threads_list2.append(threading.Thread(target=computeLine, args=[self, idLine]))
+					if len(threads_list2)==num_cores:
+						for i in range(len(threads_list2)):
+							threads_list2[i].start()
+						for i in range(len(threads_list2)):
+							threads_list2[i].join()
+						threads_list2=[]
+			for i in range(len(threads_list2)):
+				threads_list2[i].start()
+			for i in range(len(threads_list2)):
+				threads_list2[i].join()
+			# print("len(threads_list1)="+str(len(threads_list1)))
+			# print("len(threads_list2)="+str(len(threads_list2)))
+		elif self.parallel:
 			#Ce code est parallélisable car il ne comporte pas de section critique
 			#On calcule donc l'intégrale sur chaque et on remplit la matrice ensuite
 			num_cores = multiprocessing.cpu_count()
@@ -426,6 +460,8 @@ class FEM(FEComputing):
 		#Résolution du système linéaire
 		# self.x = np.linalg.solve(self.A, self.b)
 		self.A = self.A.tocsr()
+		# print(self.A.toarray())
+		# np.savetxt('A.dat', self.A.toarray())
 		self.x = spsolve(self.A, self.b)
 		end = time.time()
 		self.computingTime = end-start
@@ -439,6 +475,89 @@ class FEM(FEComputing):
 			return self.assemblingTime, self.computingTime, self.nonZeroRate
 		else:
 			return self.computingTime, self.nonZeroRate
+	# def computeLine(self, idLine):
+	# 	for idCol in range(self.N):
+	# 		idCell=idLine*self.N+idCol
+	# 		# print("idCell="+str(idCell))
+	# 		self.computeOnCell(idCell)
+	# def computeOnCell(self, idCell):
+	# 	# Tableaux de retour des données
+	# 	# Format d'un élément de A : [idNode1, idNode2, value]
+	# 	resA=[]
+	# 	# Format d'un élément de b : [idNode1, value]
+	# 	resb=[]
+
+	# 	# Affichage sympa
+	# 	if not self.parallel:
+	# 		if self.verbose == 0 and idCell%200 == 0:
+	# 			progress(idCell, self.N**2, prefix='Iteration '+str(idCell)+'/'+str(self.N**2), suffix='', decimals=1, length=40, fill='#')
+	# 		if self.verbose >= 2:
+	# 			print("\n{:#^70s}".format("LOOP idCell="+str(idCell)))
+	# 	#Récupère les noeuds délimitant la cellule
+	# 	idNodes = self.getNeighbors(idCell)
+	# 	#Calcul des positions de ces noeuds
+	# 	x0, y0 = self.getCoordNode(idNodes[0])
+	# 	x1, _ = self.getCoordNode(idNodes[1])
+	# 	_, y3 = self.getCoordNode(idNodes[3])
+	# 	#Calcul du changement de variable :
+	# 	#	x=alphaX+betaX*x_tilde
+	# 	#	y=alphaY+betaY*y_tilde
+	# 	alphaX = x0
+	# 	betaX = x1-x0
+	# 	alphaY = y0
+	# 	betaY = y3-y0
+	# 	#Récupère le noeud de référence de la cellule (en bas à gauche)
+	# 	idNode0 = self.getNeighbors(idCell)[0]
+	# 	#Boucle sur les noeuds associés à la cellule
+	# 	for i1, idNode1 in enumerate(self.getNeighbors(idCell)):
+	# 		if self.verbose >= 2:
+	# 			print("\n{:#^55s}".format("LOOP idNode1="+str(idNode1)))
+	# 		#Boucle sur les noeuds associés à la cellule
+	# 		for i2, idNode2 in enumerate(self.getNeighbors(idCell)):
+	# 			if self.verbose >= 2:
+	# 				print("\n{:#^40s}".format("idNode1="+str(idNode1)+" idNode2="+str(idNode2)))
+	# 			#Construction des 2 fonctions à intégrer sur la cellule
+	# 			fct1 = self.constructPolyNode(i1, idNode1, idNode0)
+	# 			fct2 = self.constructPolyNode(i2, idNode2, idNode0)
+	# 			#Sur les bords de Dirichlet on impose les fonctions à zéro, on les exclue donc de la boucle pour les traiter à part
+	# 			if idNode1 not in self.listNodeDiri:
+	# 				#Calcul du terme intégrale(c*phi_i*phi_j) -> notre algorithme permet de traiter un cas plus général
+	# 				if self.parallel:
+	# 					resA.append([idNode1, idNode2, self.c[idCell]*np.abs(betaX*betaY)*self.quadIntegration(ftimesg, fct1, fct2, alphaX, alphaY, betaX, betaY)])
+	# 				else:
+	# 					self.A[idNode1, idNode2] += self.c[idCell]*np.abs(betaX*betaY)*self.quadIntegration(ftimesg, fct1, fct2, alphaX, alphaY, betaX, betaY)
+	# 				#Calcul du terme intégrale(lambda*Grad(phi_i)*Grad(phi_j))
+	# 				if self.parallel:
+	# 					resA.append([idNode1, idNode2, self.lamb[idCell]*np.abs(betaX*betaY)*self.quadIntegration(gradftimesgradg, fct1, fct2, alphaX, alphaY, betaX, betaY)])
+	# 				else:
+	# 					self.A[idNode1, idNode2] += self.lamb[idCell]*np.abs(betaX*betaY)*self.quadIntegration(gradftimesgradg, fct1, fct2, alphaX, alphaY, betaX, betaY)
+	# 			#Terme d'intégration sur les bords de Neumann
+	# 			if idNode1 in self.listNodeNeumann:
+	# 				# print("IN NEUMANN NODE")
+	# 				xNode, _ = self.getCoordNode(idNode1)
+	# 				xNeumann = xNode
+	# 				if self.parallel:
+	# 					resA.append([idNode1, idNode2, self.he*np.abs(betaX*betaY)*self.quadIntegration1D(ftimesg, fct1.evaluateX(xNeumann), fct2.evaluateX(xNeumann), alphaX, alphaY, betaX, betaY)])
+	# 				else:
+	# 					self.A[idNode1, idNode2] += self.he*np.abs(betaX*betaY)*self.quadIntegration1D(ftimesg, fct1.evaluateX(xNeumann), fct2.evaluateX(xNeumann), alphaX, alphaY, betaX, betaY)
+	# 		#Calcul de la constante du terme de droite
+	# 		cte = Polynome(0., 0., 0., self.f[idCell])
+	# 		#Calcul du terme de droite par intégration
+	# 		if self.parallel:
+	# 			resb.append([idNode1, np.abs(betaX*betaY)*self.quadIntegration(ftimescte, fct1, cte, alphaX, alphaY, betaX, betaY)])
+	# 		else:
+	# 			self.b[idNode1] += np.abs(betaX*betaY)*self.quadIntegration(ftimescte, fct1, cte, alphaX, alphaY, betaX, betaY)
+	# 		#Terme d'intégration sur les bords de Neumann
+	# 		if idNode1 in self.listNodeNeumann:
+	# 			xNode, _ = self.getCoordNode(idNode1)
+	# 			xNeumann = xNode
+	# 			cte = Polynome(0., 0., 0., self.getNeumannCond(idNode1))
+	# 			if self.parallel:
+	# 				resb.append([idNode1, self.he*np.abs(betaX*betaY)*self.quadIntegration1D(ftimescte, fct1.evaluateX(xNeumann), cte.evaluateX(xNeumann), alphaX, alphaY, betaX, betaY)])
+	# 			else:
+	# 				self.b[idNode1] += self.he*np.abs(betaX*betaY)*self.quadIntegration1D(ftimescte, fct1.evaluateX(xNeumann), cte.evaluateX(xNeumann), alphaX, alphaY, betaX, betaY)
+	# 	if self.parallel:
+	# 		return [resA, resb]
 
 def computeLine(self, idLine):
 	resATot = []
