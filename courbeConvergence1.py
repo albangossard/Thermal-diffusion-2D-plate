@@ -3,18 +3,14 @@ if not os.path.isfile("NOPLOT"):
 	from sklearn import linear_model
 
 
-# list_N=[6,10,20,30,50,80,100]
-# list_N=[50]
-# list_N=[6,10,20,30,50,80,100,150,200,250,300,350,400,500,600,700,800,900,1000]
-# list_N=[6,10,20,30,50,80,100,150,200,250,300]
 list_N=[6,10,20,30,50,80,100,150,200]
 # list_N=[6,10,20,30,50]
-# list_N=np.arange(2,21,2)
 
 exactNorm = False
 
 
-for parallel in [0, 1, 2]:
+# for parallel in [0, 1, 2]:
+for parallel in [1]:
 
     list_errL2=[]
     list_errH1=[]
@@ -71,12 +67,12 @@ for parallel in [0, 1, 2]:
             list_errH1.append(np.linalg.norm(diff)/(diff.shape[0]*diff.shape[1])+np.linalg.norm(np.gradient(diff))/(diff.shape[0]*diff.shape[1]))
 
     if parallel==1:
-        np.savetxt('courbeCV1_list_N.txt',list_N)
-        np.savetxt('courbeCV1_list_errL2.txt',list_errL2)
-        np.savetxt('courbeCV1_list_errH1.txt',list_errH1)
-        np.savetxt('courbeCV1_list_nonZeroRate.txt',list_nonZeroRate)
-        np.savetxt('courbeCV1_parallel='+str(int(parallel))+'_list_assemblingTime.txt',list_assemblingTime)
-    np.savetxt('courbeCV1_parallel='+str(int(parallel))+'_list_computingTime.txt',list_computingTime)
+        np.savetxt('data/courbeCV1_list_N.txt',list_N)
+        np.savetxt('data/courbeCV1_list_errL2.txt',list_errL2)
+        np.savetxt('data/courbeCV1_list_errH1.txt',list_errH1)
+        np.savetxt('data/courbeCV1_list_nonZeroRate.txt',list_nonZeroRate)
+        np.savetxt('data/courbeCV1_parallel='+str(int(parallel))+'_list_assemblingTime.txt',list_assemblingTime)
+    np.savetxt('data/courbeCV1_parallel='+str(int(parallel))+'_list_computingTime.txt',list_computingTime)
     if not os.path.isfile("NOPLOT"):
         list_NRegr=np.log(np.array(list_N)).reshape((-1,1))
         list_errL2Regr=np.log(np.array(list_errL2)).reshape((-1,1))

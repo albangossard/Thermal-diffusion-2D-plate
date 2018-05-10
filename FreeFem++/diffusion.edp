@@ -1,0 +1,37 @@
+// diffusion.edp
+
+real he=2,lamb1=1,lamb2=100,T1=10,T3=200,Tinf=10;
+real limlamb=0.5;
+
+border bottom(t=0.,1.){x=t;y=0.;label=1;};
+border right(t=0.,1.){x=1.;y=t;label=2;};
+border up(t=0.,1.){x=1.-t;y=1.;label=3;};
+border left(t=0.,1.){x=0.;y=1.-t;label=4;};
+
+mesh Sh=buildmesh(up(50)+bottom(50)+left(50)+right(50));
+
+func lambda=lamb1*(y<=limlamb)+lamb2*(y>limlamb);
+
+fespace Vh(Sh,P1);
+
+Vh T, v;
+
+problem diff(T,v)=-int2d(Sh)(lambda*dx(T)*dx(v)+lambda*dy(T)*dy(v))
+	+int1d(Sh,2)(he*T*v)
+	+int1d(Sh,4)(he*T*v)
+	-int1d(Sh,2)(he*Tinf*v)
+	-int1d(Sh,4)(he*Tinf*v)
+	+on(1,T=T1)
+	+on(3,T=T3);
+
+diff;
+
+
+plot(Sh,cmm="Mesh",wait=true,ps="mesh");
+plot(T,cmm="Solution",fill=1,value=1,wait=true,ps="solution");
+
+Sh=adaptmesh(Sh,T,err=1e-5);
+diff;
+plot(Sh,cmm="New mesh",wait=true);
+plot(T,cmm="New solution",fill=1,value=1,wait=true);
+
