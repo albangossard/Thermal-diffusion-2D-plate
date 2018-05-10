@@ -9,8 +9,8 @@ list_N=[6,10,20,30,50,80,100,150,200]
 exactNorm = False
 
 
-# for parallel in [0, 1, 2]:
-for parallel in [1]:
+# for parallel in [1]:
+for parallel in [0, 1, 2]:
 
     list_errL2=[]
     list_errH1=[]

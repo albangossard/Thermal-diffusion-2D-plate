@@ -40,6 +40,15 @@ plt.savefig('plots/courbeCV1.png', dpi=200)
 plt.show()
 
 
+list_NRegr=np.log(np.array(list_N)).reshape((-1,1))
+list_nonZeroRateRegr=np.log(np.array(list_nonZeroRate)).reshape((-1,1))
+print("nonZeroRate")
+regrL2 = linear_model.LinearRegression()
+regrL2.fit(list_NRegr, list_nonZeroRateRegr)
+print('slope', regrL2.coef_)
+print('intercept', regrL2.intercept_)
+print('score', regrL2.score(list_NRegr, list_nonZeroRateRegr))
+
 ax = plt.gca()
 ax.plot(list_N, list_nonZeroRate, 'o', markeredgecolor='none')
 ax.set_yscale('log')
