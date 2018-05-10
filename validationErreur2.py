@@ -14,7 +14,6 @@ Tinf2 = A*np.sin(K1*w1)*np.cos(K2*w2*yNeumann)
 Tinf4 = 0.*yNeumann
 Cond = TestCase(N)
 
-# lamb=Cond.getLamb([0.5],[1.,100.])
 lamb = Cond.getLamb([0.5],[1.,1.])
 plotter(array2d(lamb),'lamb')
 
@@ -22,8 +21,6 @@ x = np.linspace(0., 1., N)
 X, Y = np.meshgrid(x, x)
 f = A*( ((K1*w1)**2.)*np.cos(K2*w2*Y)*np.sin(K1*w1*X) + ((K2*w2)**2.)*np.sin(K1*w1*X)*np.cos(K2*w2*Y) )
 f = f.reshape(-1)
-# f=Cond.getF([0.5],[-4.,-400.])
-# f = Cond.getF([0.5],[-4.,-4.])
 plotter(array2d(f),'f')
 
 M = FEM(N,T1,T3,Tinf2,Tinf4,allDiri=True,f=f,lamb=lamb,verbose=0)
@@ -31,27 +28,6 @@ M = FEM(N,T1,T3,Tinf2,Tinf4,allDiri=True,f=f,lamb=lamb,verbose=0)
 M.computeBoundaryCond()
 M.compute()
 
-
-# # plotter(array2d(M.x),'x')
-
-# Cond.setSolTheorique(A*np.sin(K1*w1*Cond.X)*np.cos(K2*w2*(1.-Cond.Y)))
-
-# diff=Cond.sol-array2d(M.x)
-# print("|\xce\x94|_2="+str(np.linalg.norm(diff)/(diff.shape[0]*diff.shape[1])))
-# print("|\xce\x94|_inf="+str(np.max(np.abs(diff))))
-
-# plotter(array2d(M.x), 'x', Case=Cond)
-
-
-
-
-
-
-
-
-
-
-# plotter(array2d(M.x),'x')
 
 Cond.setSolTheorique(A*np.sin(K1*w1*Cond.X)*np.cos(K2*w2*(1.-Cond.Y)))
 
@@ -62,8 +38,8 @@ print("|\xce\x94|_inf="+str(np.max(np.abs(diff))))
 print("H1 norm")
 print("|\xce\x94|="+str(np.linalg.norm(diff)/(diff.shape[0]*diff.shape[1])+np.linalg.norm(np.gradient(diff))/(diff.shape[0]*diff.shape[1])))
 
-plotter(array2d(M.x), 'x', Case=Cond)
 
+plotter(array2d(M.x), 'x', Case=Cond)
 
 
 Cond.setSolTheorique(A*np.sin(K1*w1*Cond.X)*np.cos(K2*w2*Cond.Y))

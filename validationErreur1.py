@@ -21,8 +21,6 @@ M.computeBoundaryCond()
 M.compute()
 
 
-# plotter(array2d(M.x),'x')
-
 Cond.setSolTheorique((Cond.X)**2.+(1.-Cond.Y)**2.)
 
 diff=Cond.sol-array2d(M.x)
@@ -34,7 +32,6 @@ print("|\xce\x94|="+str(np.linalg.norm(diff)/(diff.shape[0]*diff.shape[1])+np.li
 
 
 plotter(array2d(M.x), 'x', Case=Cond)
-
 
 
 Cond.setSolTheorique((Cond.X)**2.+(Cond.Y)**2.)
